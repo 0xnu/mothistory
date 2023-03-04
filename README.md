@@ -1,9 +1,9 @@
 ## MOT History Go SDK
 
-[![Release](https://img.shields.io/github/release/0xnu/mot-history-go-sdk.svg)](https://github.com/0xnu/mot-history-go-sdk/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/0xnu/mot-history-go-sdk)](https://goreportcard.com/report/github.com/0xnu/mot-history-go-sdk)
-[![Go Reference](https://pkg.go.dev/badge/github.com/0xnu/mot-history-go-sdk.svg)](https://pkg.go.dev/github.com/0xnu/mot-history-go-sdk)
-[![License](https://img.shields.io/github/license/0xnu/mot-history-go-sdk)](/LICENSE)
+[![Release](https://img.shields.io/github/release/0xnu/mothistory.svg)](https://github.com/0xnu/mothistory/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/0xnu/mothistory)](https://goreportcard.com/report/github.com/0xnu/mothistory)
+[![Go Reference](https://pkg.go.dev/badge/github.com/0xnu/mothistory.svg)](https://pkg.go.dev/github.com/0xnu/mothistory)
+[![License](https://img.shields.io/github/license/0xnu/mothistory)](/LICENSE)
 
 The SDK provides convenient access to the [MOT History API](https://dvsa.github.io/mot-history-api-documentation/) for applications written in the [Go](https://go.dev/) Programming Language.
 
@@ -15,7 +15,7 @@ package main
 import (
 	"fmt"
 
-	mothistory "github.com/0xnu/mot-history-go-sdk"
+	mothistory "github.com/0xnu/mothistory"
 )
 
 const apiKey = "<your-api-key>"
