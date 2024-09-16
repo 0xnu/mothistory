@@ -5,7 +5,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/0xnu/mothistory.svg)](https://pkg.go.dev/github.com/0xnu/mothistory)
 [![License](https://img.shields.io/github/license/0xnu/mothistory)](/LICENSE)
 
-The SDK provides convenient access to the [MOT History API](https://dvsa.github.io/mot-history-api-documentation/) for applications written in the [Go](https://go.dev/) Programming Language.
+The SDK provides convenient access to the [MOT History API](https://documentation.history.mot.api.gov.uk/) for applications written in the [Go](https://go.dev/) Programming Language.
 
 ### Usage Example
 
@@ -60,12 +60,12 @@ func main() {
 
 ### Setting up a MOT History API
 
-You can use this support form to request an [API Key](https://www.smartsurvey.co.uk/s/MOT_History_TradeAPI_Access_and_Support?).
+You can use this support form to request an [API Key](https://documentation.history.mot.api.gov.uk/mot-history-api/register).
 
 
 ### Using the MOT History API
 
-You can read the [API documentation](https://dvsa.github.io/mot-history-api-documentation/) to understand what's possible with the MOT History API. If you need further assistance, don't hesitate to [contact the DVSA](https://www.smartsurvey.co.uk/s/MOT_History_TradeAPI_Access_and_Support?).
+You can read the [API documentation](https://documentation.history.mot.api.gov.uk/) to understand what's possible with the MOT History API. If you need further assistance, don't hesitate to [contact the DVSA](https://documentation.history.mot.api.gov.uk/mot-history-api/support).
 
 
 ### License
