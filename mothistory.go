@@ -22,13 +22,13 @@ func NewClient(apiKey string) *Client {
 }
 
 var errorMessages = map[int]string{
-  400: "Bad Request - The data provided in the request is invalid. Please check your parameter and ensure that any date provided is no more than 5 weeks prior to today's date.",
-  403: "Unauthorised - The API key is invalid. Please provide a valid API key.",
-  404: "Resource Not Found - Vehicle with the provided parameters was not found or its test records are not valid. Please check your parameters.",
-  429: "Too Man Requests - You have exceed your rate limit or quota.  Please wait before making additional requests.",
-  500: "Internal Server Error - An unexpected issue occurred on server. Please contact support and provide the request ID returned.",
-  503: "Service Unavailable - The service is unavailable. Please try again later.",
-  504: "Gateway Timeout - The service did not respond within the time limit. Please try again later.",
+	400: "Bad Request - The data provided in the request is invalid. Please check your parameter and ensure that any date provided is no more than 5 weeks prior to today's date.",
+	403: "Unauthorised - The API key is invalid. Please provide a valid API key.",
+	404: "Resource Not Found - Vehicle with the provided parameters was not found or its test records are not valid. Please check your parameters.",
+	429: "Too Man Requests - You have exceed your rate limit or quota.  Please wait before making additional requests.",
+	500: "Internal Server Error - An unexpected issue occurred on server. Please contact support and provide the request ID returned.",
+	503: "Service Unavailable - The service is unavailable. Please try again later.",
+	504: "Gateway Timeout - The service did not respond within the time limit. Please try again later.",
 }
 
 func (c *Client) get(endpoint string, queryParams map[string]string) (*simplejson.Json, error) {
@@ -43,9 +43,9 @@ func (c *Client) get(endpoint string, queryParams map[string]string) (*simplejso
 
 	errMsg, found := errorMessages[response.StatusCode()]
 
-  if found {
-    return nil, fmt.Errorf(errMsg, response.StatusCode())
-  }
+	if found {
+		return nil, fmt.Errorf(errMsg, response.StatusCode())
+	}
 
 	json, err := simplejson.NewJson(response.Body())
 
