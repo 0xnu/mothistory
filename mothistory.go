@@ -1,86 +1,138 @@
 package mothistory
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
 
-	"github.com/bitly/go-simplejson"
-	"github.com/go-resty/resty/v2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
-const BaseURL = "https://beta.check-mot.service.gov.uk/trade/vehicles/mot-tests"
+const (
+	BaseURL  = "https://history.mot.api.gov.uk/v1/trade/vehicles"
+	TokenURL = "https://login.microsoftonline.com/a455b827-244f-4c97-b5b4-ce5d13b4d00c/oauth2/v2.0/token"
+	ScopeURL = "https://tapi.dvsa.gov.uk/.default"
+)
 
 type Client struct {
+	httpClient *http.Client
 	apiKey     string
-	restClient *resty.Client
 }
 
-func NewClient(apiKey string) *Client {
+type ClientConfig struct {
+	ClientID     string
+	ClientSecret string
+	APIKey       string
+}
+
+func NewClient(config ClientConfig) *Client {
+	oauthConfig := &clientcredentials.Config{
+		ClientID:     config.ClientID,
+		ClientSecret: config.ClientSecret,
+		TokenURL:     TokenURL,
+		Scopes:       []string{ScopeURL},
+	}
+
 	return &Client{
-		apiKey:     apiKey,
-		restClient: resty.New(),
+		httpClient: oauthConfig.Client(context.Background()),
+		apiKey:     config.APIKey,
 	}
 }
 
 var errorMessages = map[int]string{
-	400: "Bad Request - The data provided in the request is invalid. Please check your parameter and ensure that any date provided is no more than 5 weeks prior to today's date.",
-	403: "Unauthorised - The API key is invalid. Please provide a valid API key.",
-	404: "Resource Not Found - Vehicle with the provided parameters was not found or its test records are not valid. Please check your parameters.",
-	429: "Too Man Requests - You have exceed your rate limit or quota.  Please wait before making additional requests.",
-	500: "Internal Server Error - An unexpected issue occurred on server. Please contact support and provide the request ID returned.",
-	503: "Service Unavailable - The service is unavailable. Please try again later.",
-	504: "Gateway Timeout - The service did not respond within the time limit. Please try again later.",
+	400: "Bad Request - The format of the request is incorrect",
+	401: "Unauthorized - Authentication credentials are missing or invalid",
+	403: "Forbidden - The request is not allowed",
+	404: "Not Found - The requested data is not found",
+	405: "Method Not Allowed - The HTTP method is not supported for this endpoint",
+	406: "Not Acceptable - The requested media type is not supported",
+	409: "Conflict - The request could not be completed due to a conflict with the current state of the target resource",
+	412: "Precondition Failed - Could not complete request because a constraint was not met",
+	415: "Unsupported Media Type - The media type of the request is not supported",
+	422: "Unprocessable Entity - The request was well-formed but contains semantic errors",
+	429: "Too Many Requests - The user has sent too many requests in a given amount of time",
+	500: "Internal Server Error - An unexpected error has occurred",
+	502: "Bad Gateway - The server received an invalid response from an upstream server",
+	503: "Service Unavailable - The server is currently unable to handle the request",
+	504: "Gateway Timeout - The upstream server failed to send a request in the time allowed by the server",
 }
 
-func (c *Client) get(endpoint string, queryParams map[string]string) (*simplejson.Json, error) {
-	response, err := c.restClient.R().
-		SetHeader("x-api-key", c.apiKey).
-		SetQueryParams(queryParams).
-		Get(endpoint)
+func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]byte, error) {
+	url := fmt.Sprintf("%s%s", BaseURL, endpoint)
+	if len(queryParams) > 0 {
+		url = fmt.Sprintf("%s?%s", url, queryParams.Encode())
+	}
 
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to make request to API endpoint: %v", err)
+		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
-	errMsg, found := errorMessages[response.StatusCode()]
+	req.Header.Set("X-API-Key", c.apiKey)
 
-	if found {
-		return nil, fmt.Errorf(errMsg, response.StatusCode())
-	}
-
-	json, err := simplejson.NewJson(response.Body())
-
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse JSON response: %v", err)
+		return nil, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	return json, nil
+	if errMsg, found := errorMessages[resp.StatusCode]; found {
+		return nil, fmt.Errorf("%s", errMsg)
+	}
+
+	return body, nil
 }
 
-func (c *Client) GetByRegistration(registration string) (*simplejson.Json, error) {
-	queryParams := map[string]string{
-		"registration": registration,
-	}
-	return c.get(BaseURL, queryParams)
+func (c *Client) GetByRegistration(registration string) (json.RawMessage, error) {
+	endpoint := fmt.Sprintf("/registration/%s", url.PathEscape(registration))
+	return c.doRequest(http.MethodGet, endpoint, nil)
 }
 
-func (c *Client) GetByPage(page int) (*simplejson.Json, error) {
-	queryParams := map[string]string{
-		"page": fmt.Sprintf("%d", page),
-	}
-	return c.get(BaseURL, queryParams)
+func (c *Client) GetByVIN(vin string) (json.RawMessage, error) {
+	endpoint := fmt.Sprintf("/vin/%s", url.PathEscape(vin))
+	return c.doRequest(http.MethodGet, endpoint, nil)
 }
 
-func (c *Client) GetByDateAndPage(date string, page int) (*simplejson.Json, error) {
-	queryParams := map[string]string{
-		"date": date,
-		"page": fmt.Sprintf("%d", page),
-	}
-	return c.get(BaseURL, queryParams)
+func (c *Client) GetBulkDownload() (json.RawMessage, error) {
+	return c.doRequest(http.MethodGet, "/bulk-download", nil)
 }
 
-func (c *Client) GetByVehicleID(vehicleId string) (*simplejson.Json, error) {
-	queryParams := map[string]string{
-		"vehicleId": vehicleId,
+func (c *Client) RenewCredentials(apiKeyValue, email string) (json.RawMessage, error) {
+	payload := url.Values{}
+	payload.Set("awsApiKeyValue", apiKeyValue)
+	payload.Set("email", email)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/credentials", BaseURL), strings.NewReader(payload.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
-	return c.get(BaseURL, queryParams)
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("X-API-Key", c.apiKey)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	if errMsg, found := errorMessages[resp.StatusCode]; found {
+		return nil, fmt.Errorf("%s", errMsg)
+	}
+
+	return body, nil
 }
