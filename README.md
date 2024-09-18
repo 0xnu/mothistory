@@ -19,6 +19,12 @@ export MOT_API_KEY=
 
 Now, you can execute this command: `go test -v`
 
+Unset the environment variables after completing the tests:
+
+```sh
+unset MOT_CLIENT_ID && unset MOT_CLIENT_SECRET && unset MOT_API_KEY
+```
+
 ### Integration Example
 
 ```go
