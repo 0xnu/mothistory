@@ -29,16 +29,22 @@ type ClientConfig struct {
 	APIKey       string
 }
 
-func NewClient(config ClientConfig) *Client {
+func NewClient(config ClientConfig, customHTTPClient *http.Client) *Client {
 	oauthConfig := &clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 		TokenURL:     TokenURL,
 		Scopes:       []string{ScopeURL},
 	}
+	
+	// Use custom HTTP client if provided.
+	httpClient := customHTTPClient
+	if httpClient == nil {
+		httpClient = oauthConfig.Client(context.Background())
+	}
 
 	return &Client{
-		httpClient: oauthConfig.Client(context.Background()),
+		httpClient: httpClient,
 		apiKey:     config.APIKey,
 	}
 }
