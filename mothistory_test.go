@@ -26,6 +26,21 @@ func createMockAPI() (*httptest.Server) {
 		fmt.Fprintln(w, mockResponse)
 	})
 
+	handler.HandleFunc("/bulk-download", func(w http.ResponseWriter, r *http.Request) {
+		mockResponse := `{"bulk": [], "delta": []}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, mockResponse)
+	})
+
+	handler.HandleFunc("/credentials", func(w http.ResponseWriter, r *http.Request) {
+		mockResponse := `{"clientSecret": "your-new-client-secret-value"}`
+		w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+		w.Header().Set("X-API-Key", "dummy-api-key")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, mockResponse)
+	})
+
 	mockServer := httptest.NewServer(handler)
 	return mockServer
 }
@@ -100,23 +115,24 @@ func TestMOTHistoryClient(t *testing.T) {
 		}
 	})
 
-	// t.Run("RenewCredentials", func(t *testing.T) {
-	// 	email := "f@finbarrs.eu" // Please replace your email
-	// 	data, err := client.RenewCredentials(apiKey, email)
-	// 	if err != nil {
-	// 		t.Fatalf("RenewCredentials failed: %v", err)
-	// 	}
+	t.Run("RenewCredentials", func(t *testing.T) {
+		email := "f@finbarrs.eu" // Please replace your email
+		apiKey := "dummy-api-key"
+		data, err := client.RenewCredentials(apiKey, email)
+		if err != nil {
+			t.Fatalf("RenewCredentials failed: %v", err)
+		}
 
-	// 	var response map[string]interface{}
-	// 	err = json.Unmarshal(data, &response)
-	// 	if err != nil {
-	// 		t.Fatalf("Failed to unmarshal response: %v", err)
-	// 	}
+		var response map[string]interface{}
+		err = json.Unmarshal(data, &response)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal response: %v", err)
+		}
 
-	// 	if _, ok := response["clientSecret"]; !ok {
-	// 		t.Error("Expected 'clientSecret' key in response")
-	// 	}
-	// })
+		if _, ok := response["clientSecret"]; !ok {
+			t.Error("Expected 'clientSecret' key in response")
+		}
+	})
 
 	t.Run("InvalidRegistration", func(t *testing.T) {
 		_, err := client.GetByRegistration("INVALID")
