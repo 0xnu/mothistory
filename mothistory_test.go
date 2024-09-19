@@ -19,6 +19,13 @@ func createMockAPI() (*httptest.Server) {
 		fmt.Fprintln(w, mockResponse)
 	})
 
+	handler.HandleFunc("/vin/BNR32305366", func(w http.ResponseWriter, r *http.Request) {
+		mockResponse := `{"vin": "BNR32305366"}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, mockResponse)
+	})
+
 	mockServer := httptest.NewServer(handler)
 	return mockServer
 }
