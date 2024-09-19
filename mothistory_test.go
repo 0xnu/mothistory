@@ -148,16 +148,16 @@ func TestMOTHistoryClient(t *testing.T) {
 		}
 	})
 
-	// t.Run("InvalidCredentials", func(t *testing.T) {
-	// 	invalidClient := NewClient(ClientConfig{
-	// 		ClientID:     "invalid",
-	// 		ClientSecret: "invalid",
-	// 		APIKey:       "invalid",
-	// 	})
+	t.Run("InvalidCredentials", func(t *testing.T) {
+		invalidClient := NewClient(ClientConfig{
+			ClientID:     "invalid",
+			ClientSecret: "invalid",
+			APIKey:       "invalid",
+		}, nil) // Use `nil` to use the MOT API endpoint
 
-	// 	_, err := invalidClient.GetByRegistration("ML58FOU")
-	// 	if err == nil {
-	// 		t.Fatal("Expected an error for invalid credentials, but got none")
-	// 	}
-	// })
+		_, err := invalidClient.GetByRegistration("ML58FOU")
+		if err == nil {
+			t.Fatal("Expected an error for invalid credentials, but got none")
+		}
+	})
 }
