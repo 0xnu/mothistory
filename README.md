@@ -50,7 +50,7 @@ func main() {
 		ClientSecret: clientSecret,
 		APIKey:       apiKey,
 	}
-	client := mothistory.NewClient(config)
+	client := mothistory.NewClient(config, nil)
 
 	// Get data by registration
 	data, err := client.GetByRegistration("ML58FOU")
