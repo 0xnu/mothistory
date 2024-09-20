@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	// "os"
 	"testing"
 )
 
@@ -116,7 +115,7 @@ func TestMOTHistoryClient(t *testing.T) {
 	})
 
 	t.Run("RenewCredentials", func(t *testing.T) {
-		email := "f@finbarrs.eu" // Please replace your email
+		email := "f@finbarrs.eu"
 		apiKey := "dummy-api-key"
 		data, err := client.RenewCredentials(apiKey, email)
 		if err != nil {
