@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.3 - 2024-09-20 - @gabrielg2020
+* Refinements
+
 ## 1.0.2 - 2024-09-18 - @0xnu
 * New MOT History API
 * Tests

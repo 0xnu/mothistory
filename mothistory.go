@@ -13,6 +13,7 @@ import (
 )
 
 var BaseURL string = "https://history.mot.api.gov.uk/v1/trade/vehicles"
+
 const (
 	TokenURL = "https://login.microsoftonline.com/a455b827-244f-4c97-b5b4-ce5d13b4d00c/oauth2/v2.0/token"
 	ScopeURL = "https://tapi.dvsa.gov.uk/.default"
@@ -36,7 +37,7 @@ func NewClient(config ClientConfig, customHTTPClient *http.Client) *Client {
 		TokenURL:     TokenURL,
 		Scopes:       []string{ScopeURL},
 	}
-	
+
 	// Use custom HTTP client if provided.
 	httpClient := customHTTPClient
 	if httpClient == nil {

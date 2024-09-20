@@ -1,14 +1,14 @@
 package mothistory
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func createMockServer() (*httptest.Server) {
+func createMockServer() *httptest.Server {
 	handler := http.NewServeMux()
 
 	handler.HandleFunc("/registration/ML58FOU", func(w http.ResponseWriter, r *http.Request) {
