@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"golang.org/x/oauth2/clientcredentials"
+	"golang.org/x/time/rate"
 )
 
 var BaseURL string = "https://history.mot.api.gov.uk/v1/trade/vehicles"
@@ -17,11 +18,16 @@ var BaseURL string = "https://history.mot.api.gov.uk/v1/trade/vehicles"
 const (
 	TokenURL = "https://login.microsoftonline.com/a455b827-244f-4c97-b5b4-ce5d13b4d00c/oauth2/v2.0/token"
 	ScopeURL = "https://tapi.dvsa.gov.uk/.default"
+	RPSLimit = 15
+	BurstLimit = 10
+	DailyQuota = 500000
 )
 
 type Client struct {
 	httpClient *http.Client
 	apiKey     string
+	rateLimiter rate.Limiter
+	dayLimiter rate.Limiter
 }
 
 type ClientConfig struct {
@@ -38,6 +44,8 @@ func NewClient(config ClientConfig, customHTTPClient *http.Client) *Client {
 		Scopes:       []string{ScopeURL},
 	}
 
+	dailyLimit := rate.Limit(float64(DailyQuota) / float64(23*60*60)) // Daily Limit = DailyQuota / number of seconds in a day
+
 	// Use custom HTTP client if provided.
 	httpClient := customHTTPClient
 	if httpClient == nil {
@@ -47,6 +55,8 @@ func NewClient(config ClientConfig, customHTTPClient *http.Client) *Client {
 	return &Client{
 		httpClient: httpClient,
 		apiKey:     config.APIKey,
+		rateLimiter: *rate.NewLimiter(RPSLimit, BurstLimit),
+		dayLimiter: *rate.NewLimiter(dailyLimit, DailyQuota),
 	}
 }
 
@@ -80,6 +90,17 @@ func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]b
 	}
 
 	req.Header.Set("X-API-Key", c.apiKey)
+
+	limiterCtx := context.Background()
+
+	if !c.rateLimiter.Allow() {
+		fmt.Printf("Per-second limit reached. Waiting for next request to be available...")
+		c.rateLimiter.Wait(limiterCtx)
+	}
+
+	if !c.dayLimiter.Allow() {
+		return nil, fmt.Errorf("per-day limit reached")
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
