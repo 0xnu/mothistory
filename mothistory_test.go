@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func createMockAPI() (*httptest.Server) {
+func createMockServer() (*httptest.Server) {
 	handler := http.NewServeMux()
 
 	handler.HandleFunc("/registration/ML58FOU", func(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +45,7 @@ func createMockAPI() (*httptest.Server) {
 }
 
 func TestMOTHistoryClient(t *testing.T) {
-	mockServer := createMockAPI()
+	mockServer := createMockServer()
 	defer mockServer.Close()
 
 	BaseURL = mockServer.URL
