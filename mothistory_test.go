@@ -1,30 +1,65 @@
 package mothistory
 
 import (
+	"fmt"
 	"encoding/json"
-	"os"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
+func createMockServer() (*httptest.Server) {
+	handler := http.NewServeMux()
+
+	handler.HandleFunc("/registration/ML58FOU", func(w http.ResponseWriter, r *http.Request) {
+		mockResponse := `{"registration": "ML58FOU"}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, mockResponse)
+	})
+
+	handler.HandleFunc("/vin/BNR32305366", func(w http.ResponseWriter, r *http.Request) {
+		mockResponse := `{"vin": "BNR32305366"}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, mockResponse)
+	})
+
+	handler.HandleFunc("/bulk-download", func(w http.ResponseWriter, r *http.Request) {
+		mockResponse := `{"bulk": [], "delta": []}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, mockResponse)
+	})
+
+	handler.HandleFunc("/credentials", func(w http.ResponseWriter, r *http.Request) {
+		mockResponse := `{"clientSecret": "your-new-client-secret-value"}`
+		w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+		w.Header().Set("X-API-Key", "dummy-api-key")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, mockResponse)
+	})
+
+	mockServer := httptest.NewServer(handler)
+	return mockServer
+}
+
 func TestMOTHistoryClient(t *testing.T) {
-	clientID := os.Getenv("MOT_CLIENT_ID")
-	clientSecret := os.Getenv("MOT_CLIENT_SECRET")
-	apiKey := os.Getenv("MOT_API_KEY")
+	mockServer := createMockServer()
+	defer mockServer.Close()
 
-	if clientID == "" || clientSecret == "" || apiKey == "" {
-		t.Fatal("Environment variables MOT_CLIENT_ID, MOT_CLIENT_SECRET, and MOT_API_KEY must be set")
+	BaseURL = mockServer.URL
+
+	mockConfig := ClientConfig{
+		ClientID:     "nil",
+		ClientSecret: "nil",
+		APIKey:       "nil",
 	}
 
-	config := ClientConfig{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		APIKey:       apiKey,
-	}
-
-	client := NewClient(config)
+	client := NewClient(mockConfig, mockServer.Client())
 
 	t.Run("GetByRegistration", func(t *testing.T) {
-		registration := "ML58FOU" // Please replace with a valid registration number
+		registration := "ML58FOU"
 		data, err := client.GetByRegistration(registration)
 		if err != nil {
 			t.Fatalf("GetByRegistration failed: %v", err)
@@ -42,7 +77,7 @@ func TestMOTHistoryClient(t *testing.T) {
 	})
 
 	t.Run("GetByVIN", func(t *testing.T) {
-		vin := "BNR32305366" // Please replace with a valid VIN
+		vin := "BNR32305366"
 		data, err := client.GetByVIN(vin)
 		if err != nil {
 			t.Fatalf("GetByVIN failed: %v", err)
@@ -80,7 +115,8 @@ func TestMOTHistoryClient(t *testing.T) {
 	})
 
 	t.Run("RenewCredentials", func(t *testing.T) {
-		email := "f@finbarrs.eu" // Please replace your email
+		email := "f@finbarrs.eu"
+		apiKey := "dummy-api-key"
 		data, err := client.RenewCredentials(apiKey, email)
 		if err != nil {
 			t.Fatalf("RenewCredentials failed: %v", err)
@@ -116,7 +152,7 @@ func TestMOTHistoryClient(t *testing.T) {
 			ClientID:     "invalid",
 			ClientSecret: "invalid",
 			APIKey:       "invalid",
-		})
+		}, nil) // Use `nil` to use the MOT API endpoint
 
 		_, err := invalidClient.GetByRegistration("ML58FOU")
 		if err == nil {

@@ -12,8 +12,8 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
+var BaseURL string = "https://history.mot.api.gov.uk/v1/trade/vehicles"
 const (
-	BaseURL  = "https://history.mot.api.gov.uk/v1/trade/vehicles"
 	TokenURL = "https://login.microsoftonline.com/a455b827-244f-4c97-b5b4-ce5d13b4d00c/oauth2/v2.0/token"
 	ScopeURL = "https://tapi.dvsa.gov.uk/.default"
 )
@@ -29,16 +29,22 @@ type ClientConfig struct {
 	APIKey       string
 }
 
-func NewClient(config ClientConfig) *Client {
+func NewClient(config ClientConfig, customHTTPClient *http.Client) *Client {
 	oauthConfig := &clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 		TokenURL:     TokenURL,
 		Scopes:       []string{ScopeURL},
 	}
+	
+	// Use custom HTTP client if provided.
+	httpClient := customHTTPClient
+	if httpClient == nil {
+		httpClient = oauthConfig.Client(context.Background())
+	}
 
 	return &Client{
-		httpClient: oauthConfig.Client(context.Background()),
+		httpClient: httpClient,
 		apiKey:     config.APIKey,
 	}
 }
