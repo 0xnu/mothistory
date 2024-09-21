@@ -44,94 +44,111 @@ func createMockServer() *httptest.Server {
 	return mockServer
 }
 
-func TestMOTHistoryClient(t *testing.T) {
+func TestGetByRegistration(t *testing.T) {
 	mockServer := createMockServer()
 	defer mockServer.Close()
 
 	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
 
-	mockConfig := ClientConfig{
-		ClientID:     "nil",
-		ClientSecret: "nil",
-		APIKey:       "nil",
+	registration := "ML58FOU"
+	data, err := client.GetByRegistration(registration)
+	if err != nil {
+		t.Fatalf("GetByRegistration failed: %v", err)
 	}
 
-	client := NewClient(mockConfig, mockServer.Client())
+	var response map[string]interface{}
+	err = json.Unmarshal(data, &response)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
-	t.Run("GetByRegistration", func(t *testing.T) {
-		registration := "ML58FOU"
-		data, err := client.GetByRegistration(registration)
-		if err != nil {
-			t.Fatalf("GetByRegistration failed: %v", err)
-		}
+	if response["registration"] != registration {
+		t.Errorf("Expected registration %s, got %s", registration, response["registration"])
+	}
+}
 
-		var response map[string]interface{}
-		err = json.Unmarshal(data, &response)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal response: %v", err)
-		}
+func TestGetByVIN(t *testing.T) {
+	mockServer := createMockServer()
+	defer mockServer.Close()
 
-		if response["registration"] != registration {
-			t.Errorf("Expected registration %s, got %s", registration, response["registration"])
-		}
-	})
+	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
 
-	t.Run("GetByVIN", func(t *testing.T) {
-		vin := "BNR32305366"
-		data, err := client.GetByVIN(vin)
-		if err != nil {
-			t.Fatalf("GetByVIN failed: %v", err)
-		}
+	vin := "BNR32305366"
+	data, err := client.GetByVIN(vin)
+	if err != nil {
+		t.Fatalf("GetByVIN failed: %v", err)
+	}
 
-		var response map[string]interface{}
-		err = json.Unmarshal(data, &response)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal response: %v", err)
-		}
+	var response map[string]interface{}
+	err = json.Unmarshal(data, &response)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
-		if response["vin"] != vin {
-			t.Errorf("Expected VIN %s, got %s", vin, response["vin"])
-		}
-	})
+	if response["vin"] != vin {
+		t.Errorf("Expected VIN %s, got %s", vin, response["vin"])
+	}
+}
 
-	t.Run("GetBulkDownload", func(t *testing.T) {
-		data, err := client.GetBulkDownload()
-		if err != nil {
-			t.Fatalf("GetBulkDownload failed: %v", err)
-		}
+func TestGetBulkDownload(t *testing.T) {
+	mockServer := createMockServer()
+	defer mockServer.Close()
 
-		var response map[string]interface{}
-		err = json.Unmarshal(data, &response)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal response: %v", err)
-		}
+	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
 
-		if _, ok := response["bulk"]; !ok {
-			t.Error("Expected 'bulk' key in response")
-		}
-		if _, ok := response["delta"]; !ok {
-			t.Error("Expected 'delta' key in response")
-		}
-	})
+	data, err := client.GetBulkDownload()
+	if err != nil {
+		t.Fatalf("GetBulkDownload failed: %v", err)
+	}
 
-	t.Run("RenewCredentials", func(t *testing.T) {
-		email := "f@finbarrs.eu"
-		apiKey := "dummy-api-key"
-		data, err := client.RenewCredentials(apiKey, email)
-		if err != nil {
-			t.Fatalf("RenewCredentials failed: %v", err)
-		}
+	var response map[string]interface{}
+	err = json.Unmarshal(data, &response)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
-		var response map[string]interface{}
-		err = json.Unmarshal(data, &response)
-		if err != nil {
-			t.Fatalf("Failed to unmarshal response: %v", err)
-		}
+	if _, ok := response["bulk"]; !ok {
+		t.Error("Expected 'bulk' key in response")
+	}
+	if _, ok := response["delta"]; !ok {
+		t.Error("Expected 'delta' key in response")
+	}
+}
 
-		if _, ok := response["clientSecret"]; !ok {
-			t.Error("Expected 'clientSecret' key in response")
-		}
-	})
+func TestRenewCredentials(t *testing.T) {
+	mockServer := createMockServer()
+	defer mockServer.Close()
+
+	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
+
+	email := "f@finbarrs.eu"
+	apiKey := "dummy-api-key"
+	data, err := client.RenewCredentials(apiKey, email)
+	if err != nil {
+		t.Fatalf("RenewCredentials failed: %v", err)
+	}
+
+	var response map[string]interface{}
+	err = json.Unmarshal(data, &response)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if _, ok := response["clientSecret"]; !ok {
+		t.Error("Expected 'clientSecret' key in response")
+	}
+}
+
+func TestInvalidCases(t *testing.T) {
+	mockServer := createMockServer()
+	defer mockServer.Close()
+
+	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
 
 	t.Run("InvalidRegistration", func(t *testing.T) {
 		_, err := client.GetByRegistration("INVALID")
@@ -159,4 +176,13 @@ func TestMOTHistoryClient(t *testing.T) {
 			t.Fatal("Expected an error for invalid credentials, but got none")
 		}
 	})
+}
+
+func createTestClient(mockServer *httptest.Server) *Client {
+	mockConfig := ClientConfig{
+		ClientID:     "nil",
+		ClientSecret: "nil",
+		APIKey:       "nil",
+	}
+	return NewClient(mockConfig, mockServer.Client())
 }
