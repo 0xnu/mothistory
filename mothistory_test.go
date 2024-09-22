@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func createMockServer() *httptest.Server {
@@ -157,6 +158,32 @@ func TestMOTHistoryClient(t *testing.T) {
 		_, err := invalidClient.GetByRegistration("ML58FOU")
 		if err == nil {
 			t.Fatal("Expected an error for invalid credentials, but got none")
+		}
+	})
+
+	t.Run("MaxingBurstLimit", func(t *testing.T) {
+		// Need a new client to refresh limiter
+		newClient := NewClient(mockConfig, mockServer.Client())
+
+		registration := "ML58FOU"
+
+		for i := 0; i < BurstLimit / 2; i++ { // Must divide burst limit because checking .Allow() costs a token
+			allowed := newClient.rateLimiter.Allow()
+
+			if !allowed {
+				t.Fatalf("RateLimiter incorrectly blocked request %d during burst", i)
+			}
+			
+			_, err := newClient.GetByRegistration(registration)
+			if err != nil {
+				t.Fatalf("GetByRegistration failed during burst testing: %v", err)
+			}
+		}
+
+		time.Sleep(1 * time.Second)
+
+		if !newClient.rateLimiter.Allow() {
+			t.Fatalf("RateLimiter token has not replenished.")
 		}
 	})
 }
