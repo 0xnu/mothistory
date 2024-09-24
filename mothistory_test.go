@@ -211,6 +211,31 @@ func TestRateLimiting(t *testing.T) {
 	}
 }
 
+func TestDayLimiting(t *testing.T) {
+	mockServer := createMockServer()
+	defer mockServer.Close()
+
+	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
+
+	// Adjust limiter parameters for testing
+	client.dayLimiter = *rate.NewLimiter(rate.Limit(0.4), 4) // DailyQuota=4
+
+	for i := 0; i < 5; i++ {
+		registration := "ML58FOU"
+		_, err := client.GetByRegistration(registration)
+		if err != nil {
+			t.Fatalf("Error occurred when testing rate limiting: %v", err)
+		}
+
+		if i == 4 {
+			if client.dayLimiter.Tokens() > 1 {
+				t.Fatal("Day limiting failed. After using daily quota tokens expected < 1")
+			}
+		}
+	}
+}
+
 func createTestClient(mockServer *httptest.Server) *Client {
 	mockConfig := ClientConfig{
 		ClientID:     "nil",
