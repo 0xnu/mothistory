@@ -79,6 +79,14 @@ var errorMessages = map[int]string{
 }
 
 func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]byte, error) {
+	limiterCtx := context.Background()
+	if err := c.dayLimiter.Wait(limiterCtx); err != nil {
+		return nil, fmt.Errorf("daily quota exceeded: %v", err)
+	}
+	if err := c.rateLimiter.Wait(limiterCtx); err != nil {
+		return nil, fmt.Errorf("rate limit exceeded: %v", err)
+	}
+	
 	url := fmt.Sprintf("%s%s", BaseURL, endpoint)
 	if len(queryParams) > 0 {
 		url = fmt.Sprintf("%s?%s", url, queryParams.Encode())
@@ -90,17 +98,6 @@ func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]b
 	}
 
 	req.Header.Set("X-API-Key", c.apiKey)
-
-	limiterCtx := context.Background()
-
-	if !c.rateLimiter.Allow() {
-		fmt.Printf("Per-second limit reached. Waiting for next request to be available...")
-		c.rateLimiter.Wait(limiterCtx)
-	}
-
-	if !c.dayLimiter.Allow() {
-		return nil, fmt.Errorf("per-day limit reached")
-	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
