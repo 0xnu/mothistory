@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"golang.org/x/time/rate"
 )
 
 func createMockServer() *httptest.Server {
@@ -176,6 +179,65 @@ func TestInvalidCases(t *testing.T) {
 			t.Fatal("Expected an error for invalid credentials, but got none")
 		}
 	})
+}
+
+func TestRateLimiting(t *testing.T) { 
+	mockServer := createMockServer()
+	defer mockServer.Close()
+
+	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
+
+	// Adjust limiter parameters for testing
+	// !! Increasing these variables will increase time taken to complete test
+	rps := 1
+	burst := 4
+	client.rateLimiter = *rate.NewLimiter(rate.Limit(rps), burst)
+
+	for i := 0; i < (burst + 1); i++ {
+		registration := "ML58FOU"
+		_, err := client.GetByRegistration(registration)
+		if err != nil {
+			t.Fatalf("Error occurred when testing rate limiting: %v", err)
+		}
+
+		if i == burst && client.rateLimiter.Tokens() >= 1 {
+			t.Fatal("Rate limiting failed. After Burst tokens expected < 1")
+		}
+	}
+
+	time.Sleep(1 * time.Second)
+	if client.rateLimiter.Tokens() < 1 {
+		t.Fatal("Rate limiting failed. After 1 second tokens expected > 1")
+	}
+}
+
+func TestDayLimiting(t *testing.T) {
+	mockServer := createMockServer()
+	defer mockServer.Close()
+
+	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
+
+	// Adjust limiter parameters for testing
+	// !! Increasing these variables will increase time taken to complete test
+	dailyQuota := 4
+	secondsInDay := 10
+
+	dailyRate := rate.Limit(float64(dailyQuota)/float64(secondsInDay))
+	client.dayLimiter = *rate.NewLimiter(dailyRate, dailyQuota)
+
+	for i := 0; i < (dailyQuota + 1); i++ {
+		registration := "ML58FOU"
+		_, err := client.GetByRegistration(registration)
+		if err != nil {
+			t.Fatalf("Error occurred when testing rate limiting: %v", err)
+		}
+
+		if i == dailyQuota  && client.dayLimiter.Tokens() > 1 {
+			t.Fatal("Day limiting failed. After using daily quota tokens expected < 1")
+		}
+	}
 }
 
 func createTestClient(mockServer *httptest.Server) *Client {

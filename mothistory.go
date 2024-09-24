@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"golang.org/x/oauth2/clientcredentials"
+	"golang.org/x/time/rate"
 )
 
 var BaseURL string = "https://history.mot.api.gov.uk/v1/trade/vehicles"
@@ -17,11 +18,16 @@ var BaseURL string = "https://history.mot.api.gov.uk/v1/trade/vehicles"
 const (
 	TokenURL = "https://login.microsoftonline.com/a455b827-244f-4c97-b5b4-ce5d13b4d00c/oauth2/v2.0/token"
 	ScopeURL = "https://tapi.dvsa.gov.uk/.default"
+	RPSLimit = 15
+	BurstLimit = 10
+	DailyQuota = 500000
 )
 
 type Client struct {
 	httpClient *http.Client
 	apiKey     string
+	rateLimiter rate.Limiter
+	dayLimiter rate.Limiter
 }
 
 type ClientConfig struct {
@@ -38,6 +44,8 @@ func NewClient(config ClientConfig, customHTTPClient *http.Client) *Client {
 		Scopes:       []string{ScopeURL},
 	}
 
+	dailyLimit := rate.Limit(float64(DailyQuota) / float64(23*60*60)) // Daily Limit = DailyQuota / number of seconds in a day
+
 	// Use custom HTTP client if provided.
 	httpClient := customHTTPClient
 	if httpClient == nil {
@@ -47,6 +55,8 @@ func NewClient(config ClientConfig, customHTTPClient *http.Client) *Client {
 	return &Client{
 		httpClient: httpClient,
 		apiKey:     config.APIKey,
+		rateLimiter: *rate.NewLimiter(RPSLimit, BurstLimit),
+		dayLimiter: *rate.NewLimiter(dailyLimit, DailyQuota),
 	}
 }
 
@@ -69,6 +79,14 @@ var errorMessages = map[int]string{
 }
 
 func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]byte, error) {
+	limiterCtx := context.Background()
+	if err := c.dayLimiter.Wait(limiterCtx); err != nil {
+		return nil, fmt.Errorf("daily quota exceeded: %v", err)
+	}
+	if err := c.rateLimiter.Wait(limiterCtx); err != nil {
+		return nil, fmt.Errorf("rate limit exceeded: %v", err)
+	}
+	
 	url := fmt.Sprintf("%s%s", BaseURL, endpoint)
 	if len(queryParams) > 0 {
 		url = fmt.Sprintf("%s?%s", url, queryParams.Encode())
