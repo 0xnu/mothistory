@@ -189,16 +189,19 @@ func TestRateLimiting(t *testing.T) {
 	client := createTestClient(mockServer)
 
 	// Adjust limiter parameters for testing
-	client.rateLimiter = *rate.NewLimiter(1, 4) // RPS=1, Burst=4
+	// !! Increasing these variables will increase time taken to complete test
+	rps := 1
+	burst := 4
+	client.rateLimiter = *rate.NewLimiter(rate.Limit(rps), burst)
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < (burst + 1); i++ {
 		registration := "ML58FOU"
 		_, err := client.GetByRegistration(registration)
 		if err != nil {
 			t.Fatalf("Error occurred when testing rate limiting: %v", err)
 		}
 
-		if i == 4 && client.rateLimiter.Tokens() >= 1{
+		if i == burst && client.rateLimiter.Tokens() >= 1 {
 			t.Fatal("Rate limiting failed. After Burst tokens expected < 1")
 		}
 	}
@@ -217,16 +220,21 @@ func TestDayLimiting(t *testing.T) {
 	client := createTestClient(mockServer)
 
 	// Adjust limiter parameters for testing
-	client.dayLimiter = *rate.NewLimiter(rate.Limit(0.4), 4) // DailyQuota=4
+	// !! Increasing these variables will increase time taken to complete test
+	dailyQuota := 4
+	secondsInDay := 10
 
-	for i := 0; i < 5; i++ {
+	dailyRate := rate.Limit(float64(dailyQuota)/float64(secondsInDay))
+	client.dayLimiter = *rate.NewLimiter(dailyRate, dailyQuota)
+
+	for i := 0; i < (dailyQuota + 1); i++ {
 		registration := "ML58FOU"
 		_, err := client.GetByRegistration(registration)
 		if err != nil {
 			t.Fatalf("Error occurred when testing rate limiting: %v", err)
 		}
 
-		if i == 4  && client.dayLimiter.Tokens() > 1{
+		if i == dailyQuota  && client.dayLimiter.Tokens() > 1 {
 			t.Fatal("Day limiting failed. After using daily quota tokens expected < 1")
 		}
 	}
