@@ -198,10 +198,8 @@ func TestRateLimiting(t *testing.T) {
 			t.Fatalf("Error occurred when testing rate limiting: %v", err)
 		}
 
-		if i == 4 {
-			if client.rateLimiter.Tokens() >= 1 {
-				t.Fatal("Rate limiting failed. After Burst tokens expected < 1")
-			}
+		if i == 4 && client.rateLimiter.Tokens() >= 1{
+			t.Fatal("Rate limiting failed. After Burst tokens expected < 1")
 		}
 	}
 
@@ -228,10 +226,8 @@ func TestDayLimiting(t *testing.T) {
 			t.Fatalf("Error occurred when testing rate limiting: %v", err)
 		}
 
-		if i == 4 {
-			if client.dayLimiter.Tokens() > 1 {
-				t.Fatal("Day limiting failed. After using daily quota tokens expected < 1")
-			}
+		if i == 4  && client.dayLimiter.Tokens() > 1{
+			t.Fatal("Day limiting failed. After using daily quota tokens expected < 1")
 		}
 	}
 }
