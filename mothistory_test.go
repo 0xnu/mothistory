@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"golang.org/x/time/rate"
 )
 
 func createMockServer() *httptest.Server {
@@ -176,6 +179,36 @@ func TestInvalidCases(t *testing.T) {
 			t.Fatal("Expected an error for invalid credentials, but got none")
 		}
 	})
+}
+
+func TestRateLimiting(t *testing.T) { 
+	mockServer := createMockServer()
+	defer mockServer.Close()
+
+	BaseURL = mockServer.URL
+	client := createTestClient(mockServer)
+
+	// Adjust limiter parameters for testing
+	client.rateLimiter = *rate.NewLimiter(1, 4) // RPS=1, Burst=4
+
+	for i := 0; i < 5; i++ {
+		registration := "ML58FOU"
+		_, err := client.GetByRegistration(registration)
+		if err != nil {
+			t.Fatalf("Error occurred when testing rate limiting: %v", err)
+		}
+
+		if i == 4 {
+			if client.rateLimiter.Tokens() >= 1 {
+				t.Fatal("Rate limiting failed. After Burst tokens expected < 1")
+			}
+		}
+	}
+
+	time.Sleep(1 * time.Second)
+	if client.rateLimiter.Tokens() < 1 {
+		t.Fatal("Rate limiting failed. After 1 second tokens expected > 1")
+	}
 }
 
 func createTestClient(mockServer *httptest.Server) *Client {
