@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.4 - 2024-09-21 - @0xnu
+* Cyclomatic Complexity
+
 ## 1.0.3 - 2024-09-20 - @gabrielg2020
 * Refinements
 
