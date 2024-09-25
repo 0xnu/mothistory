@@ -1,6 +1,9 @@
 # Changelog
 
-## 1.0.5 - 2024-09-21 - @gabrielg2020
+## 1.0.6 - 2024-09-25 - @0xnu
+* Refinements
+
+## 1.0.5 - 2024-09-24 - @gabrielg2020
 * Enforce rate limit
 
 ## 1.0.4 - 2024-09-21 - @0xnu
