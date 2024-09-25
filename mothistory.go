@@ -16,18 +16,18 @@ import (
 var BaseURL string = "https://history.mot.api.gov.uk/v1/trade/vehicles"
 
 const (
-	TokenURL = "https://login.microsoftonline.com/a455b827-244f-4c97-b5b4-ce5d13b4d00c/oauth2/v2.0/token"
-	ScopeURL = "https://tapi.dvsa.gov.uk/.default"
-	RPSLimit = 15
+	TokenURL   = "https://login.microsoftonline.com/a455b827-244f-4c97-b5b4-ce5d13b4d00c/oauth2/v2.0/token"
+	ScopeURL   = "https://tapi.dvsa.gov.uk/.default"
+	RPSLimit   = 15
 	BurstLimit = 10
 	DailyQuota = 500000
 )
 
 type Client struct {
-	httpClient *http.Client
-	apiKey     string
+	httpClient  *http.Client
+	apiKey      string
 	rateLimiter rate.Limiter
-	dayLimiter rate.Limiter
+	dayLimiter  rate.Limiter
 }
 
 type ClientConfig struct {
@@ -53,10 +53,10 @@ func NewClient(config ClientConfig, customHTTPClient *http.Client) *Client {
 	}
 
 	return &Client{
-		httpClient: httpClient,
-		apiKey:     config.APIKey,
+		httpClient:  httpClient,
+		apiKey:      config.APIKey,
 		rateLimiter: *rate.NewLimiter(RPSLimit, BurstLimit),
-		dayLimiter: *rate.NewLimiter(dailyLimit, DailyQuota),
+		dayLimiter:  *rate.NewLimiter(dailyLimit, DailyQuota),
 	}
 }
 
@@ -86,7 +86,7 @@ func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]b
 	if err := c.rateLimiter.Wait(limiterCtx); err != nil {
 		return nil, fmt.Errorf("rate limit exceeded: %v", err)
 	}
-	
+
 	url := fmt.Sprintf("%s%s", BaseURL, endpoint)
 	if len(queryParams) > 0 {
 		url = fmt.Sprintf("%s?%s", url, queryParams.Encode())

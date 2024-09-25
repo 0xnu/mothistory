@@ -181,7 +181,7 @@ func TestInvalidCases(t *testing.T) {
 	})
 }
 
-func TestRateLimiting(t *testing.T) { 
+func TestRateLimiting(t *testing.T) {
 	mockServer := createMockServer()
 	defer mockServer.Close()
 
@@ -224,7 +224,7 @@ func TestDayLimiting(t *testing.T) {
 	dailyQuota := 4
 	secondsInDay := 10
 
-	dailyRate := rate.Limit(float64(dailyQuota)/float64(secondsInDay))
+	dailyRate := rate.Limit(float64(dailyQuota) / float64(secondsInDay))
 	client.dayLimiter = *rate.NewLimiter(dailyRate, dailyQuota)
 
 	for i := 0; i < (dailyQuota + 1); i++ {
@@ -234,7 +234,7 @@ func TestDayLimiting(t *testing.T) {
 			t.Fatalf("Error occurred when testing rate limiting: %v", err)
 		}
 
-		if i == dailyQuota  && client.dayLimiter.Tokens() > 1 {
+		if i == dailyQuota && client.dayLimiter.Tokens() > 1 {
 			t.Fatal("Day limiting failed. After using daily quota tokens expected < 1")
 		}
 	}
