@@ -8,22 +8,20 @@ on:
   schedule:
     - cron: "0 17 * * 5"
 
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
 jobs:
   codeQL:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Checkout PR
-        if: ${{ github.event_name == 'pull_request' }}
-        run: git checkout HEAD^2
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: "1.20"
 
@@ -32,8 +30,10 @@ jobs:
         with:
           languages: go
 
-      - name: Build Go code
-        run: go build ./...
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:go"
