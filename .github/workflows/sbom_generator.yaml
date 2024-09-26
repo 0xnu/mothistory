@@ -1,0 +1,33 @@
+name: SBOM Generator
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Go
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version: "1.20"
+
+      - name: Generate SBOM
+        uses: advanced-security/sbom-generator-action@375dee8e6144d9fd0ec1f5667b4f6fb4faacefed # v0.0.1
+        id: sbom
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        with:
+          path: ${{steps.sbom.outputs.fileName }}
+          name: "SBOM"

@@ -1,0 +1,39 @@
+name: "Code Scanning - Action"
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 17 * * 5"
+
+jobs:
+  codeQL:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request' }}
+        run: git checkout HEAD^2
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: go
+
+      - name: Build Go code
+        run: go build ./...
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

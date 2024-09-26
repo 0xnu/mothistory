@@ -1,5 +1,6 @@
 ## MOT History Go SDK
 
+[![Test](https://github.com/0xnu/mothistory/actions/workflows/test.yaml/badge.svg)](https://github.com/0xnu/mothistory/actions/workflows/test.yaml)
 [![Release](https://img.shields.io/github/release/0xnu/mothistory.svg)](https://github.com/0xnu/mothistory/releases/latest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/0xnu/mothistory)](https://goreportcard.com/report/github.com/0xnu/mothistory)
 [![Go Reference](https://pkg.go.dev/badge/github.com/0xnu/mothistory.svg)](https://pkg.go.dev/github.com/0xnu/mothistory)
