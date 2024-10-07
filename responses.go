@@ -44,7 +44,7 @@ type BulkDownloadResponse struct {
 
 type BulkDelta struct {
 	Filename      string `json:"filename"`
-	DonwloadURL   string `json:"downloadUrl"`
+	DownloadURL   string `json:"downloadUrl"`
 	FileSize      int    `json:"fileSize"`
 	FileCreatedOn string `json:"fileCreatedOn"`
 }
