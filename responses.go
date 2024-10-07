@@ -4,7 +4,7 @@ import (
 	// "encoding/json"
 )
 // Response for {baseURL}/[registration|vin]/<registration|vin>
-type VehicleDetails struct {
+type VehicleDetailsResponse struct {
 	Registration         string    `json:"registration"`
 	Make                 string    `json:"make"`
 	FirstUsedDate        string    `json:"firstUsedDate"`
