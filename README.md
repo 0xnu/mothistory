@@ -68,19 +68,12 @@ func main() {
 	printJSON(data)
 }
 
-func printJSON(data json.RawMessage) {
-	var prettyJSON map[string]interface{}
-	err := json.Unmarshal(data, &prettyJSON)
-	if err != nil {
-		log.Fatalf("failed to parse JSON: %v", err)
-	}
-
-	prettyData, err := json.MarshalIndent(prettyJSON, "", "  ")
-	if err != nil {
-		log.Fatalf("failed to format JSON: %v", err)
-	}
-
-	fmt.Println(string(prettyData))
+func printJSON[T any](data *T) {
+	prettyData, err := json.MarshalIndent(data, "", "  ")
+    if err != nil {
+			log.Fatalf("failed to marshal vehicle data: %v", err)
+    }
+    fmt.Println(string(prettyData))
 }
 ```
 
