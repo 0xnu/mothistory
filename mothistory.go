@@ -133,8 +133,8 @@ func (c *Client) GetByVIN(vin string) (*VehicleDetails, error) {
 	return doRequest[VehicleDetails](c, http.MethodGet, endpoint, nil)
 }
 
-func (c *Client) GetBulkDownload() (*BulkDownload, error) {
-	return doRequest[BulkDownload](c, http.MethodGet, "/bulk-download", nil)
+func (c *Client) GetBulkDownload() (*BulkDownloadResponse, error) {
+	return doRequest[BulkDownloadResponse](c, http.MethodGet, "/bulk-download", nil)
 }
 
 // func (c *Client) RenewCredentials(apiKeyValue, email string) (json.RawMessage, error) {

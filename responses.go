@@ -37,7 +37,7 @@ type Defect struct {
 }
 
 // Response for {baseURL}/[bulk-download]
-type BulkDownload struct {
+type BulkDownloadResponse struct {
 	Bulk  []BulkDelta `json:"bulk"`
 	Delta []BulkDelta `json:"delta"`
 }
@@ -47,4 +47,9 @@ type BulkDelta struct {
 	DonwloadURL   string `json:"downloadUrl"`
 	FileSize      int    `json:"fileSize"`
 	FileCreatedOn string `json:"fileCreatedOn"`
+}
+
+// Response for v1/trade/[credentials]
+type ClientSecretResponse struct {
+	ClientSecret string `json:"clientSecret"`
 }
