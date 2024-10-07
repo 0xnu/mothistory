@@ -3,7 +3,7 @@ package mothistory
 import (
 	// "encoding/json"
 )
-
+// Response for {baseURL}/[registration|vin]/<registration|vin>
 type VehicleDetails struct {
 	Registration         string    `json:"registration"`
 	Make                 string    `json:"make"`
@@ -34,4 +34,17 @@ type Defect struct {
 	Text         string `json:"text"`
 	TypeOfDefect string `json:"type"`
 	Dangerous    bool   `json:"dangerous"`
+}
+
+// Response for {baseURL}/[bulk-download]
+type BulkDownload struct {
+	Bulk  []BulkDelta `json:"bulk"`
+	Delta []BulkDelta `json:"delta"`
+}
+
+type BulkDelta struct {
+	Filename      string `json:"filename"`
+	DonwloadURL   string `json:"downloadUrl"`
+	FileSize      int    `json:"fileSize"`
+	FileCreatedOn string `json:"fileCreatedOn"`
 }
