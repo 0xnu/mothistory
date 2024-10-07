@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
+	// "strings"
 
 	"golang.org/x/oauth2/clientcredentials"
 	"golang.org/x/time/rate"
@@ -78,7 +78,7 @@ var errorMessages = map[int]string{
 	504: "Gateway Timeout - The upstream server failed to send a request in the time allowed by the server",
 }
 
-func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]byte, error) {
+func doRequest[T any](c *Client, method, endpoint string, queryParams url.Values)(*T, error) {
 	limiterCtx := context.Background()
 	if err := c.dayLimiter.Wait(limiterCtx); err != nil {
 		return nil, fmt.Errorf("daily quota exceeded: %v", err)
@@ -114,50 +114,56 @@ func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]b
 		return nil, fmt.Errorf("%s", errMsg)
 	}
 
-	return body, nil
+	var structuredResponse T
+	err = json.Unmarshal(body, &structuredResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal body: %v", err)
+	}
+
+	return &structuredResponse, nil
 }
 
-func (c *Client) GetByRegistration(registration string) (json.RawMessage, error) {
+func (c *Client) GetByRegistration(registration string) (*VehicleDetails, error) {
 	endpoint := fmt.Sprintf("/registration/%s", url.PathEscape(registration))
-	return c.doRequest(http.MethodGet, endpoint, nil)
+	return doRequest[VehicleDetails](c, http.MethodGet, endpoint, nil)
 }
 
-func (c *Client) GetByVIN(vin string) (json.RawMessage, error) {
+func (c *Client) GetByVIN(vin string) (*VehicleDetails, error) {
 	endpoint := fmt.Sprintf("/vin/%s", url.PathEscape(vin))
-	return c.doRequest(http.MethodGet, endpoint, nil)
+	return doRequest[VehicleDetails](c, http.MethodGet, endpoint, nil)
 }
 
-func (c *Client) GetBulkDownload() (json.RawMessage, error) {
-	return c.doRequest(http.MethodGet, "/bulk-download", nil)
-}
+// func (c *Client) GetBulkDownload() (json.RawMessage, error) {
+// 	return c.doRequest(http.MethodGet, "/bulk-download", nil)
+// }
 
-func (c *Client) RenewCredentials(apiKeyValue, email string) (json.RawMessage, error) {
-	payload := url.Values{}
-	payload.Set("awsApiKeyValue", apiKeyValue)
-	payload.Set("email", email)
+// func (c *Client) RenewCredentials(apiKeyValue, email string) (json.RawMessage, error) {
+// 	payload := url.Values{}
+// 	payload.Set("awsApiKeyValue", apiKeyValue)
+// 	payload.Set("email", email)
 
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/credentials", BaseURL), strings.NewReader(payload.Encode()))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
-	}
+// 	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/credentials", BaseURL), strings.NewReader(payload.Encode()))
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to create request: %v", err)
+// 	}
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("X-API-Key", c.apiKey)
+// 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+// 	req.Header.Set("X-API-Key", c.apiKey)
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make request: %v", err)
-	}
-	defer resp.Body.Close()
+// 	resp, err := c.httpClient.Do(req)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to make request: %v", err)
+// 	}
+// 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %v", err)
-	}
+// 	body, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to read response body: %v", err)
+// 	}
 
-	if errMsg, found := errorMessages[resp.StatusCode]; found {
-		return nil, fmt.Errorf("%s", errMsg)
-	}
+// 	if errMsg, found := errorMessages[resp.StatusCode]; found {
+// 		return nil, fmt.Errorf("%s", errMsg)
+// 	}
 
-	return body, nil
-}
+// 	return body, nil
+// }
