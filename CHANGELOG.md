@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.7 - 2024-10-12 - @gabrielg2020
+* Added support for structured responses
+* Adapted tests to accept structured response
+* Added support for structured responses (renew credentials)
+* Added support for structured responses (bulk-download)
+
 ## 1.0.6 - 2024-09-25 - @0xnu
 * Refinements
 
