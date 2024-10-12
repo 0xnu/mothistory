@@ -1,7 +1,6 @@
 package mothistory
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +21,7 @@ func createMockServer() *httptest.Server {
 	})
 
 	handler.HandleFunc("/vin/BNR32305366", func(w http.ResponseWriter, r *http.Request) {
-		mockResponse := `{"vin": "BNR32305366"}`
+		mockResponse := `{"registration": "ML58FOU"}`
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, mockResponse)
@@ -60,14 +59,8 @@ func TestGetByRegistration(t *testing.T) {
 		t.Fatalf("GetByRegistration failed: %v", err)
 	}
 
-	var response map[string]interface{}
-	err = json.Unmarshal(data, &response)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal response: %v", err)
-	}
-
-	if response["registration"] != registration {
-		t.Errorf("Expected registration %s, got %s", registration, response["registration"])
+	if data.Registration != registration {
+		t.Errorf("Expected registration %s, got %s", registration, data.Registration)
 	}
 }
 
@@ -78,20 +71,15 @@ func TestGetByVIN(t *testing.T) {
 	BaseURL = mockServer.URL
 	client := createTestClient(mockServer)
 
+	registration := "ML58FOU"
 	vin := "BNR32305366"
 	data, err := client.GetByVIN(vin)
 	if err != nil {
 		t.Fatalf("GetByVIN failed: %v", err)
 	}
 
-	var response map[string]interface{}
-	err = json.Unmarshal(data, &response)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal response: %v", err)
-	}
-
-	if response["vin"] != vin {
-		t.Errorf("Expected VIN %s, got %s", vin, response["vin"])
+	if data.Registration != registration {
+		t.Errorf("Expected registration %s, got %s", registration, data.Registration)
 	}
 }
 
@@ -107,16 +95,10 @@ func TestGetBulkDownload(t *testing.T) {
 		t.Fatalf("GetBulkDownload failed: %v", err)
 	}
 
-	var response map[string]interface{}
-	err = json.Unmarshal(data, &response)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal response: %v", err)
-	}
-
-	if _, ok := response["bulk"]; !ok {
+	if data.Bulk == nil {
 		t.Error("Expected 'bulk' key in response")
 	}
-	if _, ok := response["delta"]; !ok {
+	if data.Bulk == nil {
 		t.Error("Expected 'delta' key in response")
 	}
 }
@@ -135,14 +117,8 @@ func TestRenewCredentials(t *testing.T) {
 		t.Fatalf("RenewCredentials failed: %v", err)
 	}
 
-	var response map[string]interface{}
-	err = json.Unmarshal(data, &response)
-	if err != nil {
-		t.Fatalf("Failed to unmarshal response: %v", err)
-	}
-
-	if _, ok := response["clientSecret"]; !ok {
-		t.Error("Expected 'clientSecret' key in response")
+	if len(data.ClientSecret) == 0  {
+		t.Error("Expected 'clientSecret' length > 0")
 	}
 }
 

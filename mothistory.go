@@ -78,7 +78,7 @@ var errorMessages = map[int]string{
 	504: "Gateway Timeout - The upstream server failed to send a request in the time allowed by the server",
 }
 
-func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]byte, error) {
+func doRequest[T any](c *Client, method, endpoint string, queryParams url.Values)(*T, error) {
 	limiterCtx := context.Background()
 	if err := c.dayLimiter.Wait(limiterCtx); err != nil {
 		return nil, fmt.Errorf("daily quota exceeded: %v", err)
@@ -114,24 +114,30 @@ func (c *Client) doRequest(method, endpoint string, queryParams url.Values) ([]b
 		return nil, fmt.Errorf("%s", errMsg)
 	}
 
-	return body, nil
+	var structuredResponse T
+	err = json.Unmarshal(body, &structuredResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal body: %v", err)
+	}
+
+	return &structuredResponse, nil
 }
 
-func (c *Client) GetByRegistration(registration string) (json.RawMessage, error) {
+func (c *Client) GetByRegistration(registration string) (*VehicleDetailsResponse, error) {
 	endpoint := fmt.Sprintf("/registration/%s", url.PathEscape(registration))
-	return c.doRequest(http.MethodGet, endpoint, nil)
+	return doRequest[VehicleDetailsResponse](c, http.MethodGet, endpoint, nil)
 }
 
-func (c *Client) GetByVIN(vin string) (json.RawMessage, error) {
+func (c *Client) GetByVIN(vin string) (*VehicleDetailsResponse, error) {
 	endpoint := fmt.Sprintf("/vin/%s", url.PathEscape(vin))
-	return c.doRequest(http.MethodGet, endpoint, nil)
+	return doRequest[VehicleDetailsResponse](c, http.MethodGet, endpoint, nil)
 }
 
-func (c *Client) GetBulkDownload() (json.RawMessage, error) {
-	return c.doRequest(http.MethodGet, "/bulk-download", nil)
+func (c *Client) GetBulkDownload() (*BulkDownloadResponse, error) {
+	return doRequest[BulkDownloadResponse](c, http.MethodGet, "/bulk-download", nil)
 }
 
-func (c *Client) RenewCredentials(apiKeyValue, email string) (json.RawMessage, error) {
+func (c *Client) RenewCredentials(apiKeyValue, email string) (*ClientSecretResponse, error) {
 	payload := url.Values{}
 	payload.Set("awsApiKeyValue", apiKeyValue)
 	payload.Set("email", email)
@@ -159,5 +165,11 @@ func (c *Client) RenewCredentials(apiKeyValue, email string) (json.RawMessage, e
 		return nil, fmt.Errorf("%s", errMsg)
 	}
 
-	return body, nil
+	var structuredResponse ClientSecretResponse
+	err = json.Unmarshal(body, &structuredResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal body: %v", err)
+	}
+
+	return &structuredResponse, nil
 }

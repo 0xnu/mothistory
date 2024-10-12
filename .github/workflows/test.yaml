@@ -22,7 +22,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-versions: ${{ matrix.go-version }}
+          go-version: ${{ matrix.go-version }}
 
       - name: Install Dependencies
         run: go mod download
