@@ -1,8 +1,9 @@
 package mothistory
 
 import (
-	// "encoding/json"
+// "encoding/json"
 )
+
 // Response for {baseURL}/[registration|vin]/<registration|vin>
 type VehicleDetailsResponse struct {
 	Registration         string    `json:"registration"`

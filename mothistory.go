@@ -78,7 +78,7 @@ var errorMessages = map[int]string{
 	504: "Gateway Timeout - The upstream server failed to send a request in the time allowed by the server",
 }
 
-func doRequest[T any](c *Client, method, endpoint string, queryParams url.Values)(*T, error) {
+func doRequest[T any](c *Client, method, endpoint string, queryParams url.Values) (*T, error) {
 	limiterCtx := context.Background()
 	if err := c.dayLimiter.Wait(limiterCtx); err != nil {
 		return nil, fmt.Errorf("daily quota exceeded: %v", err)

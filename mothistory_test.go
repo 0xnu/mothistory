@@ -117,7 +117,7 @@ func TestRenewCredentials(t *testing.T) {
 		t.Fatalf("RenewCredentials failed: %v", err)
 	}
 
-	if len(data.ClientSecret) == 0  {
+	if len(data.ClientSecret) == 0 {
 		t.Error("Expected 'clientSecret' length > 0")
 	}
 }
