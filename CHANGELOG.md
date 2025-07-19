@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.8 - 2024-07-19 - @0xnu
+* Upgraded oauth2 from 0.23.0 to 0.27.0
+
 ## 1.0.7 - 2024-10-12 - @gabrielg2020
 * Added support for structured responses
 * Adapted tests to accept structured response
